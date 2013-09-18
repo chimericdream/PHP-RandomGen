@@ -5,9 +5,9 @@
  * This file contains the RandomGen class.
  *
  * @file       RandomGen.php
- * @author     Bill Parrott <bparrott@ku.edu>
- * @date       11/30/2012
- * @version    1.0
+ * @author     Bill Parrott <bill@chimericdream.com>
+ * @date       09/18/2013
+ * @version    1.1
  */
 
 class RandomGen
@@ -20,13 +20,11 @@ class RandomGen
      * This constructor initializes the pseudo-random number generator with
      * either a user-specified seed or a random one chosen by PHP.
      *
-     * @return void
+     * @return self Returns itself to allow method chaining
      */
     public function __construct($s = NULL) {
-        $this->seed = $s;
-        if (!is_null($s)) {
-            srand($this->seed);
-        }
+        $this->setSeed($s);
+        return $this;
     } //end __construct
 
 
@@ -41,7 +39,7 @@ class RandomGen
      */
     public function getBetween($max, $min = 0) {
         $rangeSize = $max - $min;
-        return rand() % $rangeSize + $min;
+        return $this->get() % $rangeSize + $min;
     } //end getBetween
 
 
@@ -65,7 +63,11 @@ class RandomGen
      * @return int A pseudo-random number
      */
     public function get() {
-        return rand();
+        if (function_exists('mt_rand')) {
+            return mt_rand();
+        } else {
+            return rand();
+        }
     } //end get
 
 
@@ -74,12 +76,16 @@ class RandomGen
      *
      * This function sets the seed to a random number.
      *
-     * @return void
+     * @return self Returns itself to allow method chaining
      */
     public function scramble() {
-        srand();
-        $this->seed = $this->get();
-        srand($this->seed);
+        if (function_exists('mt_srand')) {
+            mt_srand();
+        } else {
+            srand();
+        }
+        $this->setSeed($this->get());
+        return $this;
     } //end scramble
 
 
@@ -88,12 +94,17 @@ class RandomGen
      *
      * This function sets a new seed to be used used by the generator.
      *
-     * @param int s The new seed for srand().
-     * @return void
+     * @param int s The new seed for srand()/mt_srand().
+     * @return self Returns itself to allow method chaining
      */
-    public function setSeed($s) {
+    public function setSeed($s = NULL) {
         $this->seed = $s;
-        srand($this->seed);
+        if (function_exists('mt_srand')) {
+            mt_srand($this->seed);
+        } else {
+            srand($this->seed);
+        }
+        return $this;
     } //end setSeed
 
 
@@ -123,7 +134,11 @@ class RandomGen
      */
     public function fillArray(array $arr, $min = 0, $max = NULL) {
         if (is_null($max)) {
-            $max = getrandmax();
+            if (function_exists('mt_getrandmax')) {
+                $max = mt_getrandmax();
+            } else {
+                $max = getrandmax();
+            }
         }
         $size = count($arr);
         for ($i = 0; $i < $size; $i++) {
